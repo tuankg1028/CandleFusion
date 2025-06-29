@@ -1,6 +1,6 @@
 # 📊 CandleFusion
 
-**CandleFusion** is a deep learning pipeline that combines **Vision Transformer (ViT)** and **BERT** using **cross-attention** to classify candlestick charts and forecast prices. It supports end-to-end training directly from Binance OHLCV data and can push trained models to Hugging Face Hub.
+**CandleFusion** is a deep learning pipeline that combines **Vision Transformer (ViT)** and **BERT** using **cross-attention** to classify candlestick charts and forecast prices. It supports end-to-end training directly from Binance OHLCV data and can push both datasets and trained models to Hugging Face Hub.
 
 ---
 
@@ -13,8 +13,9 @@
 - ✅ Dual-task learning: Classification + Price forecasting
 - ✅ Modular pipeline split into dataset building and training phases
 - ✅ Multiprocessing support for efficient chart generation
-- ✅ **Hugging Face Hub integration** for model sharing
-- ✅ **One-click model publishing** to HF Hub
+- ✅ **Hugging Face Hub integration** for both datasets and models
+- ✅ **One-click dataset publishing** to HF Hub with automatic splits
+- ✅ **One-click model publishing** to HF Hub with model cards
 
 ---
 
@@ -38,6 +39,7 @@ CandleFusion/
 │   ├── binance_downloader.py
 │   ├── chart_generator.py
 │   ├── dataset_index.py
+│   ├── hf_uploader.py      # 🆕 HuggingFace dataset uploader
 │   └── main.py
 ├── training/               # Model training pipeline
 │   ├── dataset.py
@@ -64,22 +66,42 @@ CandleFusion/
 git clone <repository-url>
 cd CandleFusion
 pip install -r requirements.txt
+
+# One-time Hugging Face login (optional, for uploading)
+huggingface-cli login
 ```
 
 ### 2. Build Dataset
 
 ```bash
 cd build_dataset
+
+# Basic dataset creation
 python main.py --symbol BTCUSDT --interval 1h --start "1 Jan, 2024" --window 30
+
+# Build dataset AND upload to Hugging Face Hub
+python main.py --symbol BTCUSDT --interval 1h --start "1 Jan, 2024" --window 30 \
+               --upload_to_hf --hf_repo_id "your-username/btc-candlestick-dataset"
+
+# Create private dataset on HF
+python main.py --symbol ETHUSDT --interval 4h \
+               --upload_to_hf --hf_repo_id "your-username/eth-dataset" --hf_private
 ```
 
-**Options:**
+**Dataset Options:**
 
 - `--symbol`: Trading pair (e.g., BTCUSDT, ETHUSDT)
 - `--interval`: Kline interval (1m, 5m, 15m, 1h, 1d)
 - `--start`: Start date for data collection
 - `--window`: Number of candles per chart image
 - `--output_dir`: Base directory for outputs (default: ../data)
+
+**🤗 HuggingFace Dataset Options:**
+
+- `--upload_to_hf`: Enable pushing dataset to Hugging Face Hub
+- `--hf_repo_id`: Your HF dataset repository (e.g., "username/dataset-name")
+- `--hf_token`: HF token (optional if using `huggingface-cli login`)
+- `--hf_private`: Create private HF dataset repository
 
 ### 3. Train Model
 
@@ -89,8 +111,7 @@ cd training
 # Basic training
 python main.py --batch_size 8 --epochs 5 --lr 2e-5
 
-# Train and push to Hugging Face Hub
-huggingface-cli login  # One-time setup
+# Train and push model to Hugging Face Hub
 python main.py --batch_size 8 --epochs 10 --lr 2e-5 \
                --push_to_hub --hub_model_id "your-username/candlefusion"
 
@@ -107,7 +128,7 @@ python main.py --push_to_hub --hub_model_id "your-username/candlefusion"
 - `--lr`: Learning rate
 - `--device`: Device for training (cuda/cpu)
 
-**🤗 Hugging Face Hub Options:**
+**🤗 Hugging Face Model Options:**
 
 - `--push_to_hub`: Enable pushing to Hugging Face Hub
 - `--hub_model_id`: Your HF model repository (e.g., "username/candlefusion")
@@ -115,7 +136,9 @@ python main.py --push_to_hub --hub_model_id "your-username/candlefusion"
 
 ---
 
-## 📊 Dataset Format
+## 📊 Dataset Format & HF Integration
+
+### Local Dataset Structure
 
 The pipeline generates:
 
@@ -123,12 +146,42 @@ The pipeline generates:
 2. **Chart Images**: PNG files of candlestick charts with technical indicators
 3. **Dataset Index**: CSV linking images to text descriptions and labels
 
-Example dataset index:
+### Hugging Face Dataset Structure
 
-```csv
-image_path,text,label,next_close
-../data/charts/candle_0000.png,"Open: 45230.50, High: 45876.20, Low: 44892.10, Close: 45654.30, Volume: 1234567",1,45800.25
-../data/charts/candle_0001.png,"Open: 45654.30, High: 45999.80, Low: 45123.40, Close: 45321.90, Volume: 987654",0,45100.50
+When uploaded to HF Hub, datasets are automatically split into:
+
+- **Train**: 72% of data for training
+- **Validation**: 8% of data for validation
+- **Test**: 20% of data for testing
+
+Each record contains:
+```python
+{
+    'image': PIL.Image,           # Candlestick chart
+    'text': str,                  # OHLCV description
+    'label': str,                 # Trading signal
+    'next_close': float,          # Next closing price
+    'image_path': str             # Original filename
+}
+```
+
+### Loading HF Datasets
+
+```python
+from datasets import load_dataset
+
+# Load your uploaded dataset
+dataset = load_dataset("your-username/btc-candlestick-dataset")
+
+# Access different splits
+train_data = dataset['train']
+test_data = dataset['test']
+
+# Example usage
+for example in train_data:
+    image = example['image']
+    text = example['text']
+    label = example['label']
 ```
 
 ---
@@ -147,25 +200,32 @@ image_path,text,label,next_close
 
 ## 🤗 Hugging Face Integration
 
-### Automatic Model Card Generation
+### Dataset Upload Features
 
-When pushing to Hub, the pipeline automatically creates:
+- **Automatic Splits**: Train/validation/test splits created automatically
+- **Dataset Cards**: Auto-generated documentation with metadata
+- **Image Handling**: Efficient storage and loading of chart images
+- **Metadata Preservation**: All OHLCV data and labels maintained
 
-- **Model Card**: Detailed description with training parameters
+### Model Upload Features
+
+- **Model Card Generation**: Detailed description with training parameters
 - **Config File**: Model architecture and hyperparameters
 - **Model Weights**: PyTorch state dict as `pytorch_model.bin`
 
 ### Loading from Hub
 
 ```python
+# Load dataset
+from datasets import load_dataset
+dataset = load_dataset("username/candlestick-dataset")
+
+# Load model
 from huggingface_hub import hf_hub_download
 import torch
 from model import CrossAttentionModel
 
-# Download model from Hub
 model_path = hf_hub_download(repo_id="username/candlefusion", filename="pytorch_model.bin")
-
-# Load model
 model = CrossAttentionModel()
 model.load_state_dict(torch.load(model_path))
 model.eval()
@@ -178,8 +238,8 @@ model.eval()
 1. **Chart Generation**: Uses multiprocessing for faster image creation
 2. **Memory Management**: Processes charts in batches to avoid memory issues
 3. **GPU Training**: Automatically detects CUDA availability
-4. **Data Augmentation**: Consider adding for better generalization
-5. **Model Sharing**: Push to HF Hub for easy deployment and sharing
+4. **HF Upload**: Large datasets are uploaded efficiently with automatic chunking
+5. **Data Versioning**: Use HF Hub for dataset and model versioning
 
 ---
 
@@ -190,6 +250,7 @@ model.eval()
 - Modify `utils/text_formatter.py` for different text representations
 - Update `utils/label_generator.py` for different classification schemes
 - Adjust `chart_generator.py` for different chart styles or indicators
+- Customize `hf_uploader.py` for different dataset structures
 
 ### Model Architecture
 
@@ -199,32 +260,43 @@ model.eval()
 
 ---
 
-## 📝 Example Usage
+## 📝 Complete Example Workflow
 
 ```bash
-# Build dataset for Ethereum with 4-hour candles
+# 1. Build dataset for Ethereum with 4-hour candles and upload to HF
 cd build_dataset
-python main.py --symbol ETHUSDT --interval 4h --start "1 Jun, 2023" --window 50
+python main.py --symbol ETHUSDT --interval 4h --start "1 Jun, 2023" --window 50 \
+               --upload_to_hf --hf_repo_id "myuser/eth-4h-candlestick"
 
-# Train with larger batch size and push to Hub
-cd training
+# 2. Train model using the local dataset and push to HF
+cd ../training
 python main.py --batch_size 16 --epochs 10 --lr 1e-5 --device cuda \
                --push_to_hub --hub_model_id "myuser/candlefusion-eth-4h"
+
+# 3. Use the published dataset in other projects
+python -c "
+from datasets import load_dataset
+dataset = load_dataset('myuser/eth-4h-candlestick')
+print(f'Train: {len(dataset[\"train\"])} samples')
+print(f'Test: {len(dataset[\"test\"])} samples')
+"
 ```
 
 ---
 
-## 🌐 Model Repository
+## 🌐 Hub Repositories
 
-Once pushed to Hugging Face Hub, your model will be available at:
-`https://huggingface.co/your-username/candlefusion`
+Once uploaded to Hugging Face Hub, your assets will be available at:
 
-The repository includes:
+**Datasets**: `https://huggingface.co/datasets/your-username/dataset-name`
+- Automatic data viewer
+- Download statistics
+- Community discussions
 
-- Model weights and architecture
-- Training configuration
+**Models**: `https://huggingface.co/your-username/model-name`
+- Model card with performance metrics
 - Usage examples
-- Performance metrics
+- Integration with Inference API
 
 ---
 
@@ -233,7 +305,8 @@ The repository includes:
 1. Fork the repository
 2. Create a feature branch
 3. Make your changes
-4. Submit a pull request
+4. Test with both local and HF Hub workflows
+5. Submit a pull request
 
 ---
 

@@ -1,13 +1,7 @@
-pandas>=1.5.0
-python-binance>=1.0.19
+pandas
+binance-python
 mplfinance
-transformers
-pillow
-torch
-torchvision
-datasets
-numpy
 matplotlib
-seaborn
-tqdm
 huggingface_hub
+datasets
+Pillow
