@@ -1,11 +1,11 @@
-def generate_label(candle: dict) -> int:
+def generate_label(candle_dict):
     """
-    Generate a label for a candlestick.
-
+    Generate binary label based on candle data.
+    
     Args:
-        candle (dict): Dict with keys ['open', 'close']
-
+        candle_dict (dict): Dictionary with open, high, low, close, volume keys
+        
     Returns:
-        int: 1 for bullish (green candle), 0 for bearish (red candle)
+        int: 0 for bearish (close < open), 1 for bullish (close >= open)
     """
-    return int(candle['close'] > candle['open'])
+    return 1 if candle_dict['close'] >= candle_dict['open'] else 0

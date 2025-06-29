@@ -1,15 +1,11 @@
-def format_candle_to_text(candle: dict) -> str:
+def format_candle_to_text(candle_dict):
     """
-    Convert a single candlestick row to a formatted text string.
-
+    Convert OHLCV candle data to text description.
+    
     Args:
-        candle (dict): Dict with keys ['open', 'high', 'low', 'close', 'volume']
-
+        candle_dict (dict): Dictionary with open, high, low, close, volume keys
+        
     Returns:
-        str: Natural language representation
+        str: Formatted text description of the candle
     """
-    return (
-        f"Open: {candle['open']:.2f}, High: {candle['high']:.2f}, "
-        f"Low: {candle['low']:.2f}, Close: {candle['close']:.2f}, "
-        f"Volume: {candle['volume']:.2f}"
-    )
+    return f"Open: {candle_dict['open']:.2f}, High: {candle_dict['high']:.2f}, Low: {candle_dict['low']:.2f}, Close: {candle_dict['close']:.2f}, Volume: {candle_dict['volume']:.0f}"
