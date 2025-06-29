@@ -73,4 +73,4 @@ def save_chart_images(df: pd.DataFrame, window: int = 30, output_dir: str = "./c
 if __name__ == "__main__":
     # Example usage
     df = pd.read_csv("./data/btc_ohlcv.csv", parse_dates=["open_time"])
-    save_chart_images(df, window=30, n_processes=16, output_dir="./charts")
+    save_chart_images(df, window=30, output_dir="./charts")
