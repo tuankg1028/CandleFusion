@@ -57,8 +57,8 @@ class CandleFusionDemo:
         # Class labels
         self.class_labels = ["Bearish", "Bullish"]
     
-    def preprocess_inputs(self, image, text):
-        """Preprocess image and text inputs for the model"""
+    def preprocess_inputs(self, image):
+        """Preprocess image input for the model"""
         # Process image
         if image is None:
             raise ValueError("Please upload a candlestick chart image")
@@ -67,9 +67,8 @@ class CandleFusionDemo:
         image_inputs = self.processor(images=image, return_tensors="pt")
         pixel_values = image_inputs["pixel_values"].to(self.device)
         
-        # Process text
-        if not text.strip():
-            text = "Market analysis"  # Default text if empty
+        # Process text with default value
+        text = "Market analysis"  # Default text
         
         text_inputs = self.tokenizer(
             text,
@@ -84,11 +83,11 @@ class CandleFusionDemo:
         return pixel_values, input_ids, attention_mask
     
     @spaces.GPU
-    def predict(self, image, text):
+    def predict(self, image):
         """Make prediction using the model"""
         try:
             # Preprocess inputs
-            pixel_values, input_ids, attention_mask = self.preprocess_inputs(image, text)
+            pixel_values, input_ids, attention_mask = self.preprocess_inputs(image)
             
             # Model prediction
             with torch.no_grad():
@@ -133,11 +132,11 @@ def create_demo():
         gr.Markdown("""
         # 🕯️ CandleFusion Demo
         
-        Upload a candlestick chart image and provide market context to get:
+        Upload a candlestick chart image to get:
         - **Market Direction Prediction** (Bullish/Bearish)
         - **Next Close Price Forecast**
         
-        This model combines visual analysis of candlestick charts with textual market context using BERT + ViT architecture.
+        This model analyzes candlestick charts using BERT + ViT architecture.
         """)
         
         with gr.Row():
@@ -150,19 +149,11 @@ def create_demo():
                     height=300
                 )
                 
-                text_input = gr.Textbox(
-                    label="Market Context",
-                    placeholder="Enter market analysis, news, or context (e.g., 'Strong volume with positive earnings report')",
-                    lines=3,
-                    value="Technical analysis of price action"
-                )
-                
                 predict_btn = gr.Button("🔮 Analyze Chart", variant="primary")
                 
                 gr.Markdown("""
                 ### 💡 Tips:
                 - Upload clear candlestick chart images
-                - Provide relevant market context
                 - Charts should show recent price action
                 """)
             
@@ -181,17 +172,17 @@ def create_demo():
         gr.Markdown("### 📚 Example")
         gr.Examples(
             examples=[
-                ["examples/example_chart.png", "Strong bullish momentum with high volume"],
-                ["examples/example_chart2.png", "Bearish reversal pattern forming"]
+                ["examples/example_chart.png"],
+                ["examples/example_chart2.png"]
             ],
-            inputs=[image_input, text_input],
+            inputs=[image_input],
             label="Try these examples:"
         )
         
         # Connect the prediction function
         predict_btn.click(
             fn=demo_instance.predict,
-            inputs=[image_input, text_input],
+            inputs=[image_input],
             outputs=[classification_output, forecast_output]
         )
         
