@@ -30,15 +30,15 @@ def main():
     index_csv = os.path.join(args.output_dir, "dataset_index.csv")
     os.makedirs(chart_dir, exist_ok=True)
 
-    # === Step 1: Download OHLCV
-    df = get_ohlcv_data(args.symbol, args.interval, args.start)
-    save_to_csv(df, ohlcv_path)
+    # # === Step 1: Download OHLCV
+    # df = get_ohlcv_data(args.symbol, args.interval, args.start)
+    # save_to_csv(df, ohlcv_path)
 
-    # === Step 2: Generate Charts
-    save_chart_images(df, window=args.window, output_dir=chart_dir)
+    # # === Step 2: Generate Charts
+    # save_chart_images(df, window=args.window, output_dir=chart_dir)
 
-    # === Step 3–5: Text, Label, Index
-    create_dataset_index(df, image_dir=chart_dir, window=args.window, output_csv=index_csv)
+    # # === Step 3–5: Text, Label, Index
+    # create_dataset_index(df, image_dir=chart_dir, window=args.window, output_csv=index_csv)
 
     # === Step 6: Dataset & Loader
     dataset = CandlestickDataset(csv_path=index_csv)
@@ -56,11 +56,4 @@ if __name__ == "__main__":
 
 
 # Example command to run the script:
-# python main.py \
-#   --symbol BTCUSDT \
-#   --interval 1h \
-#   --start "1 Jan, 2024" \
-#   --window 30 \
-#   --batch_size 8 \
-#   --epochs 5 \
-#   --device cuda
+# python main.py --symbol BTCUSDT --interval 1h --start "1 Jan, 2024" --window 30 --batch_size 8 --epochs 5 --device cuda
