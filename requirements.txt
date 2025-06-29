@@ -5,3 +5,9 @@ transformers
 pillow
 torch
 torchvision
+datasets
+numpy
+matplotlib
+seaborn
+tqdm
+huggingface_hub

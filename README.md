@@ -1,6 +1,6 @@
 # 📊 CandleFusion
 
-**CandleFusion** is a deep learning pipeline that combines **Vision Transformer (ViT)** and **BERT** using **cross-attention** to classify candlestick charts as **bullish (1)** or **bearish (0)**. It supports end-to-end training directly from Binance OHLCV data.
+**CandleFusion** is a deep learning pipeline that combines **Vision Transformer (ViT)** and **BERT** using **cross-attention** to classify candlestick charts and forecast prices. It supports end-to-end training directly from Binance OHLCV data and can push trained models to Hugging Face Hub.
 
 ---
 
@@ -10,9 +10,11 @@
 - ✅ Candlestick chart image generation with parallel processing
 - ✅ Textual description encoding using BERT
 - ✅ Cross-attention fusion of BERT and ViT embeddings
-- ✅ Binary classification: Bullish or Bearish
+- ✅ Dual-task learning: Classification + Price forecasting
 - ✅ Modular pipeline split into dataset building and training phases
 - ✅ Multiprocessing support for efficient chart generation
+- ✅ **Hugging Face Hub integration** for model sharing
+- ✅ **One-click model publishing** to HF Hub
 
 ---
 
@@ -21,8 +23,8 @@
 ```text
 Text (BERT) [CLS] ──┐
                     ▼
-           Cross-Attention  →  Classifier → 0 / 1
-                    ▲
+           Cross-Attention  →  Classifier → Bullish/Bearish (0/1/2)
+                    ▲       →  Forecaster → Next Close Price
 Chart (ViT) Patches ┘
 ```
 
@@ -94,6 +96,26 @@ python main.py --batch_size 8 --epochs 5 --lr 2e-5
 - `--lr`: Learning rate
 - `--device`: Device for training (cuda/cpu)
 
+### 4. 🤗 Push to Hugging Face Hub
+
+```bash
+# Login to Hugging Face (one-time setup)
+huggingface-cli login
+
+# Train and automatically push to Hub
+cd training
+python main.py --push_to_hub --hub_model_id "your-username/candlefusion" --epochs 10
+
+# Or use environment variable for token
+export HF_TOKEN="your_hf_token_here"
+python main.py --push_to_hub --hub_model_id "your-username/candlefusion"
+```
+
+**Hub Options:**
+- `--push_to_hub`: Enable pushing to Hugging Face Hub
+- `--hub_model_id`: Your HF model repository (e.g., "username/candlefusion")
+- `--hub_token`: HF token (optional if using `huggingface-cli login`)
+
 ---
 
 ## 📊 Dataset Format
@@ -107,9 +129,9 @@ The pipeline generates:
 Example dataset index:
 
 ```csv
-image_path,text,label
-../data/charts/candle_0000.png,"Open: 45230.50, High: 45876.20, Low: 44892.10, Close: 45654.30, Volume: 1234567",1
-../data/charts/candle_0001.png,"Open: 45654.30, High: 45999.80, Low: 45123.40, Close: 45321.90, Volume: 987654",0
+image_path,text,label,next_close
+../data/charts/candle_0000.png,"Open: 45230.50, High: 45876.20, Low: 44892.10, Close: 45654.30, Volume: 1234567",1,45800.25
+../data/charts/candle_0001.png,"Open: 45654.30, High: 45999.80, Low: 45123.40, Close: 45321.90, Volume: 987654",0,45100.50
 ```
 
 ---
@@ -119,9 +141,38 @@ image_path,text,label
 - **Text Encoder**: BERT-base-uncased
 - **Image Encoder**: ViT-base-patch16-224
 - **Fusion**: Multi-head cross-attention (8 heads)
-- **Classification**: Binary (Bullish=1, Bearish=0)
+- **Classification**: 3-class (Bearish=0, Neutral=1, Bullish=2)
+- **Regression**: Next closing price prediction
 - **Input Text**: OHLCV numerical descriptions
 - **Input Images**: 224x224 candlestick charts with volume and moving averages
+
+---
+
+## 🤗 Hugging Face Integration
+
+### Automatic Model Card Generation
+
+When pushing to Hub, the pipeline automatically creates:
+
+- **Model Card**: Detailed description with training parameters
+- **Config File**: Model architecture and hyperparameters
+- **Model Weights**: PyTorch state dict as `pytorch_model.bin`
+
+### Loading from Hub
+
+```python
+from huggingface_hub import hf_hub_download
+import torch
+from model import CrossAttentionModel
+
+# Download model from Hub
+model_path = hf_hub_download(repo_id="username/candlefusion", filename="pytorch_model.bin")
+
+# Load model
+model = CrossAttentionModel()
+model.load_state_dict(torch.load(model_path))
+model.eval()
+```
 
 ---
 
@@ -131,6 +182,7 @@ image_path,text,label
 2. **Memory Management**: Processes charts in batches to avoid memory issues
 3. **GPU Training**: Automatically detects CUDA availability
 4. **Data Augmentation**: Consider adding for better generalization
+5. **Model Sharing**: Push to HF Hub for easy deployment and sharing
 
 ---
 
@@ -139,7 +191,7 @@ image_path,text,label
 ### Adding New Features
 
 - Modify `utils/text_formatter.py` for different text representations
-- Update `utils/label_generator.py` for multi-class classification
+- Update `utils/label_generator.py` for different classification schemes
 - Adjust `chart_generator.py` for different chart styles or indicators
 
 ### Model Architecture
@@ -157,10 +209,24 @@ image_path,text,label
 cd build_dataset
 python main.py --symbol ETHUSDT --interval 4h --start "1 Jun, 2023" --window 50
 
-# Train with larger batch size and more epochs
+# Train with larger batch size and push to Hub
 cd training
-python main.py --batch_size 16 --epochs 10 --lr 1e-5 --device cuda
+python main.py --batch_size 16 --epochs 10 --lr 1e-5 --device cuda \
+               --push_to_hub --hub_model_id "myuser/candlefusion-eth-4h"
 ```
+
+---
+
+## 🌐 Model Repository
+
+Once pushed to Hugging Face Hub, your model will be available at:
+`https://huggingface.co/your-username/candlefusion`
+
+The repository includes:
+- Model weights and architecture
+- Training configuration
+- Usage examples
+- Performance metrics
 
 ---
 
