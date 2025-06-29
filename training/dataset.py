@@ -46,10 +46,12 @@ class CandlestickDataset(Dataset):
 
         # === Label ===
         label = torch.tensor(row["label"], dtype=torch.long)
+        next_close = torch.tensor(row["next_close"], dtype=torch.float)
 
         return {
             "pixel_values": pixel_values,
             "input_ids": input_ids,
             "attention_mask": attention_mask,
-            "label": label
+            "label": label,
+            "next_close": next_close
         }
