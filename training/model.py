@@ -12,14 +12,14 @@ class CrossAttentionModel(nn.Module):
                  num_classes=2):
         super().__init__()
 
-        # Load pretrained models
+        # Encoders
         self.bert = BertModel.from_pretrained(text_model_name)
         self.vit = ViTModel.from_pretrained(image_model_name)
 
-        # Cross-attention layer: BERT CLS attends to image patches
+        # Cross-Attention layer
         self.cross_attention = nn.MultiheadAttention(embed_dim=hidden_dim, num_heads=8, batch_first=True)
 
-        # Final classifier
+        # Classification Head
         self.classifier = nn.Sequential(
             nn.Linear(hidden_dim, hidden_dim),
             nn.ReLU(),
@@ -27,24 +27,34 @@ class CrossAttentionModel(nn.Module):
             nn.Linear(hidden_dim, num_classes)
         )
 
-    def forward(self, input_ids, attention_mask, pixel_values):
-        # === Text Encoder (BERT) ===
-        text_outputs = self.bert(input_ids=input_ids, attention_mask=attention_mask)
-        text_cls = text_outputs.last_hidden_state[:, 0:1, :]  # (B, 1, H) → use [CLS] token only
+        # Forecasting Head (regression)
+        self.regressor = nn.Sequential(
+            nn.Linear(hidden_dim, hidden_dim),
+            nn.ReLU(),
+            nn.Dropout(0.3),
+            nn.Linear(hidden_dim, 1)  # Predict next closing price
+        )
 
-        # === Image Encoder (ViT) ===
+    def forward(self, input_ids, attention_mask, pixel_values):
+        # === Text Encoding ===
+        text_outputs = self.bert(input_ids=input_ids, attention_mask=attention_mask)
+        text_cls = text_outputs.last_hidden_state[:, 0:1, :]  # (B, 1, H)
+
+        # === Image Encoding ===
         image_outputs = self.vit(pixel_values=pixel_values)
-        image_tokens = image_outputs.last_hidden_state[:, 1:, :]  # (B, N, H), skip [CLS] token
+        image_tokens = image_outputs.last_hidden_state[:, 1:, :]  # skip CLS token
 
         # === Cross-Attention ===
         fused_cls, _ = self.cross_attention(
-            query=text_cls,        # (B, 1, H)
-            key=image_tokens,      # (B, N, H)
-            value=image_tokens     # (B, N, H)
-        )  # → (B, 1, H)
+            query=text_cls,
+            key=image_tokens,
+            value=image_tokens
+        )  # (B, 1, H)
 
         fused_cls = fused_cls.squeeze(1)  # (B, H)
 
-        # === Classifier ===
-        logits = self.classifier(fused_cls)
-        return logits
+        # === Dual Heads ===
+        logits = self.classifier(fused_cls)     # Classification
+        forecast = self.regressor(fused_cls)    # Regression (next price)
+
+        return {"logits": logits, "forecast": forecast}
