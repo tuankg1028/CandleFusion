@@ -170,12 +170,10 @@ def create_demo():
                 gr.Markdown("### 📈 Results")
                 
                 classification_output = gr.Markdown(
-                    label="Market Direction",
                     value="Upload an image and click 'Analyze Chart' to see prediction"
                 )
                 
                 forecast_output = gr.Markdown(
-                    label="Price Forecast",
                     value=""
                 )
         
@@ -183,8 +181,8 @@ def create_demo():
         gr.Markdown("### 📚 Example")
         gr.Examples(
             examples=[
-                ["example_chart.png", "Strong bullish momentum with high volume"],
-                ["example_chart2.png", "Bearish reversal pattern forming"]
+                ["examples/example_chart.png", "Strong bullish momentum with high volume"],
+                ["examples/example_chart2.png", "Bearish reversal pattern forming"]
             ],
             inputs=[image_input, text_input],
             label="Try these examples:"
@@ -208,20 +206,13 @@ def main():
     """Main function to launch the demo"""
     try:
         demo = create_demo()
-        # Updated launch configuration for better compatibility
-        demo.launch(
-            server_name="0.0.0.0",
-            server_port=int(os.environ.get("PORT", 7860)),
-            share=False,  # Disable sharing to avoid potential issues
-            debug=False,  # Disable debug mode for production
-            show_error=True,
-            quiet=False
-        )
+        # Launch with server_name for compatibility on HF Spaces
+        demo.launch(server_name="0.0.0.0")
     except Exception as e:
         print(f"Failed to launch Gradio demo: {e}")
         # Fallback launch with minimal configuration
         demo = create_demo()
-        demo.launch()
+        demo.launch(server_name="0.0.0.0")
 
 if __name__ == "__main__":
     main()

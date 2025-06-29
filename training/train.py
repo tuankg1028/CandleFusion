@@ -102,6 +102,10 @@ tags:
 
 A multimodal financial analysis model that combines textual market sentiment with visual candlestick patterns for enhanced trading signal prediction and price forecasting.
 
+## Links
+- 🔗 **GitHub Repository**: https://github.com/tuankg1028/CandleFusion
+- 🚀 **Demo on Hugging Face Spaces**: https://huggingface.co/spaces/tuankg1028/candlefusion
+
 ## Architecture Overview
 
 ### Core Components
