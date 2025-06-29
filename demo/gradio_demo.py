@@ -4,25 +4,48 @@ import sys
 import os
 from PIL import Image
 import numpy as np
+from huggingface_hub import hf_hub_download
+
+# Import spaces for GPU support on Hugging Face Spaces
+try:
+    import spaces
+    HF_SPACES = True
+except ImportError:
+    HF_SPACES = False
+    # Create a dummy decorator if not on Spaces
+    def spaces_gpu_decorator(func):
+        return func
+    spaces = type('spaces', (), {'GPU': spaces_gpu_decorator})()
 
 # Add parent directory to path to import our modules
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from training.model import CrossAttentionModel
-from training.dataset import CandlestickDataset
 from transformers import BertTokenizer, ViTImageProcessor
 
 class CandleFusionDemo:
-    def __init__(self, model_path="./training/checkpoints/candlefusion_model.pt"):
+    def __init__(self, model_path=None):
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         
-        # Load model
+        # Load model from Hugging Face
         self.model = CrossAttentionModel()
-        if os.path.exists(model_path):
-            self.model.load_state_dict(torch.load(model_path, map_location=self.device))
-            print(f"✅ Model loaded from {model_path}")
-        else:
-            print(f"⚠️ Model checkpoint not found at {model_path}. Using untrained model.")
+        
+        try:
+            # Download model from Hugging Face Hub
+            print("📥 Downloading model from Hugging Face...")
+            model_file = hf_hub_download(
+                repo_id="tuankg1028/candlefusion",
+                filename="pytorch_model.bin",
+                cache_dir="./model_cache"
+            )
+            
+            # Load the downloaded model
+            self.model.load_state_dict(torch.load(model_file, map_location=self.device))
+            print(f"✅ Model loaded from Hugging Face: tuankg1028/candlefusion")
+            
+        except Exception as e:
+            print(f"❌ Error loading model from Hugging Face: {str(e)}")
+            print("⚠️ Using untrained model instead.")
         
         self.model.to(self.device)
         self.model.eval()
@@ -60,6 +83,7 @@ class CandleFusionDemo:
         
         return pixel_values, input_ids, attention_mask
     
+    @spaces.GPU
     def predict(self, image, text):
         """Make prediction using the model"""
         try:
@@ -182,13 +206,22 @@ def create_demo():
 
 def main():
     """Main function to launch the demo"""
-    demo = create_demo()
-    demo.launch(
-        server_name="0.0.0.0",
-        server_port=7860,
-        share=True,  # Set to False if you don't want a public link
-        debug=True
-    )
+    try:
+        demo = create_demo()
+        # Updated launch configuration for better compatibility
+        demo.launch(
+            server_name="0.0.0.0",
+            server_port=int(os.environ.get("PORT", 7860)),
+            share=False,  # Disable sharing to avoid potential issues
+            debug=False,  # Disable debug mode for production
+            show_error=True,
+            quiet=False
+        )
+    except Exception as e:
+        print(f"Failed to launch Gradio demo: {e}")
+        # Fallback launch with minimal configuration
+        demo = create_demo()
+        demo.launch()
 
 if __name__ == "__main__":
     main()

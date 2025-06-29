@@ -1,8 +1,19 @@
+---
+title: CandleFusion Demo
+emoji: 🕯️
+colorFrom: blue
+colorTo: green
+sdk: gradio
+sdk_version: "4.44.0"
+app_file: app.py
+pinned: false
+---
+
 # CandleFusion Web Demo
 
 This directory contains a Gradio-based web demo for the CandleFusion model.
 
-## Setup
+## Local Setup
 
 1. Install dependencies:
 
@@ -10,17 +21,25 @@ This directory contains a Gradio-based web demo for the CandleFusion model.
 pip install -r requirements.txt
 ```
 
-2. Make sure you have a trained model checkpoint at:
-
-```
-../training/checkpoints/candlefusion_model.pt
-```
-
-3. Run the demo:
+2. Run the demo:
 
 ```bash
 python gradio_demo.py
 ```
+
+## Hugging Face Spaces Deployment
+
+This demo is designed to run on Hugging Face Spaces. To deploy:
+
+1. Create a new Space on [Hugging Face Spaces](https://huggingface.co/spaces)
+2. Choose "Gradio" as the SDK
+3. Upload these files to your Space:
+   - `app.py` (entry point for HF Spaces)
+   - `requirements.txt`
+   - `gradio_demo.py`
+   - Any example images
+
+The model will be automatically downloaded from `tuankg1028/candlefusion` on startup.
 
 ## Usage
 
@@ -40,9 +59,10 @@ The demo will provide:
 - **User-friendly Interface**: Clean Gradio interface with examples
 - **Error Handling**: Graceful handling of invalid inputs
 - **Mobile Responsive**: Works on both desktop and mobile devices
+- **Auto Model Loading**: Downloads pre-trained model from Hugging Face Hub
 
 ## Notes
 
-- The demo uses the same preprocessing pipeline as the training code
-- Model checkpoint is loaded automatically if available
-- If no checkpoint is found, the demo will use an untrained model (for testing interface)
+- The demo automatically downloads the model from `tuankg1028/candlefusion`
+- Model is cached locally after first download
+- Compatible with both local development and Hugging Face Spaces
