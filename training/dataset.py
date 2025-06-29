@@ -16,6 +16,13 @@ class CandlestickDataset(Dataset):
             image_size (int): Size to resize chart images to (default 224)
         """
         self.data = pd.read_csv(csv_path)
+
+        # Validate required columns
+        required_columns = ["image_path", "text", "label", "next_close"]
+        for col in required_columns:
+            if col not in self.data.columns:
+                raise ValueError(f"Missing required column: {col} in {csv_path}")
+            
         self.tokenizer = BertTokenizer.from_pretrained("bert-base-uncased")
         self.processor = ViTImageProcessor.from_pretrained("google/vit-base-patch16-224")
         self.image_size = image_size
