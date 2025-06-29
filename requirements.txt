@@ -1,0 +1,5 @@
+pandas>=1.5.0
+python-binance>=1.0.19
+mplfinance
+transformers
+pillow
