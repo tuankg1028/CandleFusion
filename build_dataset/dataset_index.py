@@ -1,5 +1,9 @@
 import os
+import sys
 import pandas as pd
+
+# Add parent directory to path for utils access
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from utils.text_formatter import format_candle_to_text
 from utils.label_generator import generate_label
 

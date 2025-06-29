@@ -5,6 +5,7 @@ import torch.nn as nn
 from torch.utils.data import DataLoader
 from transformers import get_scheduler
 from tqdm import tqdm
+import os
 
 from dataset import CandlestickDataset
 from model import CrossAttentionModel
@@ -53,8 +54,8 @@ def train(model, dataloader, val_loader=None, epochs=5, lr=2e-5, device="cuda"):
         if val_loader:
             evaluate(model, val_loader, device)
 
-    torch.save(model.state_dict(), "./checkpoints/cross_attention_model.pt")
-    print("✅ Model saved at ./checkpoints/cross_attention_model.pt")
+    torch.save(model.state_dict(), "../checkpoints/cross_attention_model.pt")
+    print("✅ Model saved at ../checkpoints/cross_attention_model.pt")
 
 
 def evaluate(model, dataloader, device="cuda"):
