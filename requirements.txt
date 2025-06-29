@@ -3,3 +3,5 @@ python-binance>=1.0.19
 mplfinance
 transformers
 pillow
+touch
+touchvision
