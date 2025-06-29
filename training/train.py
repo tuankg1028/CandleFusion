@@ -93,31 +93,69 @@ tags:
 - multimodal
 - bert
 - vit
+- cross-attention
+- trading
+- forecasting
 ---
 
 # CandleFusion Model
 
-A multimodal model that combines BERT text analysis with Vision Transformer (ViT) for candlestick pattern recognition and price forecasting.
+A multimodal financial analysis model that combines textual market sentiment with visual candlestick patterns for enhanced trading signal prediction and price forecasting.
 
-## Model Architecture
-- Text encoder: BERT
-- Vision encoder: ViT
-- Cross-attention mechanism for fusion
-- Dual task: classification + regression
+## Architecture Overview
+
+### Core Components
+- **Text Encoder**: BERT (bert-base-uncased) for processing market sentiment and news
+- **Vision Encoder**: Vision Transformer (ViT-base-patch16-224) for candlestick pattern recognition
+- **Cross-Attention Fusion**: Multi-head attention mechanism (8 heads, 768 dim) for text-image integration
+- **Dual Task Heads**: 
+  - Classification head for trading signals (buy/sell/hold)
+  - Regression head for next closing price prediction
+
+### Data Flow
+1. **Text Processing**: Market sentiment → BERT → CLS token (768-dim)
+2. **Image Processing**: Candlestick charts → ViT → Patch embeddings (197 tokens, 768-dim each)
+3. **Cross-Modal Fusion**: Text CLS as query, Image patches as keys/values → Fused representation
+4. **Dual Predictions**: 
+   - Fused features → Classification head → Trading signal logits
+   - Fused features → Regression head → Price forecast
+
+### Model Specifications
+- **Input Text**: Tokenized to max 64 tokens
+- **Input Images**: Resized to 224×224 RGB
+- **Hidden Dimension**: 768 (consistent across encoders)
+- **Output Classes**: {2} (binary: bullish/bearish)
+- **Dropout**: 0.3 in both heads
 
 ## Training Details
-- Epochs: {epochs}
-- Learning Rate: {lr}
-- Loss weight (alpha): {alpha}
+- **Epochs**: {epochs}
+- **Learning Rate**: {lr}
+- **Loss Function**: CrossEntropy (classification) + MSE (regression)
+- **Loss Weight (α)**: {alpha} for regression term
+- **Optimizer**: AdamW with linear scheduling
 
 ## Usage
 ```python
 from model import CrossAttentionModel
 import torch
 
+# Load model
 model = CrossAttentionModel()
 model.load_state_dict(torch.load("pytorch_model.bin"))
+model.eval()
+
+# Inference
+outputs = model(input_ids, attention_mask, pixel_values)
+trading_signals = outputs["logits"]
+price_forecast = outputs["forecast"]
 ```
+
+## Performance
+The model simultaneously optimizes for:
+- **Classification Task**: Trading signal accuracy
+- **Regression Task**: Price prediction MSE
+
+This dual-task approach enables the model to learn both categorical market direction and continuous price movements.
 """
             
             config = {
