@@ -85,10 +85,21 @@ python main.py --symbol BTCUSDT --interval 1h --start "1 Jan, 2024" --window 30
 
 ```bash
 cd training
+
+# Basic training
 python main.py --batch_size 8 --epochs 5 --lr 2e-5
+
+# Train and push to Hugging Face Hub
+huggingface-cli login  # One-time setup
+python main.py --batch_size 8 --epochs 10 --lr 2e-5 \
+               --push_to_hub --hub_model_id "your-username/candlefusion"
+
+# Using environment variable for token
+export HF_TOKEN="your_hf_token_here"
+python main.py --push_to_hub --hub_model_id "your-username/candlefusion"
 ```
 
-**Options:**
+**Training Options:**
 
 - `--data_dir`: Directory containing dataset (default: ../data)
 - `--batch_size`: Training batch size
@@ -96,22 +107,8 @@ python main.py --batch_size 8 --epochs 5 --lr 2e-5
 - `--lr`: Learning rate
 - `--device`: Device for training (cuda/cpu)
 
-### 4. 🤗 Push to Hugging Face Hub
+**🤗 Hugging Face Hub Options:**
 
-```bash
-# Login to Hugging Face (one-time setup)
-huggingface-cli login
-
-# Train and automatically push to Hub
-cd training
-python main.py --push_to_hub --hub_model_id "your-username/candlefusion" --epochs 10
-
-# Or use environment variable for token
-export HF_TOKEN="your_hf_token_here"
-python main.py --push_to_hub --hub_model_id "your-username/candlefusion"
-```
-
-**Hub Options:**
 - `--push_to_hub`: Enable pushing to Hugging Face Hub
 - `--hub_model_id`: Your HF model repository (e.g., "username/candlefusion")
 - `--hub_token`: HF token (optional if using `huggingface-cli login`)
@@ -223,6 +220,7 @@ Once pushed to Hugging Face Hub, your model will be available at:
 `https://huggingface.co/your-username/candlefusion`
 
 The repository includes:
+
 - Model weights and architecture
 - Training configuration
 - Usage examples
