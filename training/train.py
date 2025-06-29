@@ -113,16 +113,16 @@ A multimodal financial analysis model that combines textual market sentiment wit
   - Regression head for next closing price prediction
 
 ### Data Flow
-1. **Text Processing**: Market sentiment → BERT → CLS token (768-dim)
-2. **Image Processing**: Candlestick charts → ViT → Patch embeddings (197 tokens, 768-dim each)
-3. **Cross-Modal Fusion**: Text CLS as query, Image patches as keys/values → Fused representation
+1. **Text Processing**: Market sentiment -> BERT -> CLS token (768-dim)
+2. **Image Processing**: Candlestick charts -> ViT -> Patch embeddings (197 tokens, 768-dim each)
+3. **Cross-Modal Fusion**: Text CLS as query, Image patches as keys/values -> Fused representation
 4. **Dual Predictions**: 
-   - Fused features → Classification head → Trading signal logits
-   - Fused features → Regression head → Price forecast
+   - Fused features -> Classification head -> Trading signal logits
+   - Fused features -> Regression head -> Price forecast
 
 ### Model Specifications
 - **Input Text**: Tokenized to max 64 tokens
-- **Input Images**: Resized to 224×224 RGB
+- **Input Images**: Resized to 224x224 RGB
 - **Hidden Dimension**: 768 (consistent across encoders)
 - **Output Classes**: {2} (binary: bullish/bearish)
 - **Dropout**: 0.3 in both heads
@@ -131,7 +131,7 @@ A multimodal financial analysis model that combines textual market sentiment wit
 - **Epochs**: {epochs}
 - **Learning Rate**: {lr}
 - **Loss Function**: CrossEntropy (classification) + MSE (regression)
-- **Loss Weight (α)**: {alpha} for regression term
+- **Loss Weight (alpha)**: {alpha} for regression term
 - **Optimizer**: AdamW with linear scheduling
 
 ## Usage
@@ -179,7 +179,7 @@ This dual-task approach enables the model to learn both categorical market direc
             )
             
             # Upload model card
-            with open("./checkpoints/README.md", "w") as f:
+            with open("./checkpoints/README.md", "w", encoding="utf-8") as f:
                 f.write(model_card_content)
             api.upload_file(
                 path_or_fileobj="./checkpoints/README.md",
