@@ -17,6 +17,13 @@ def train(model, dataloader, val_loader=None, epochs=5, lr=2e-5, alpha=0.5, devi
     device = torch.device(device if torch.cuda.is_available() else "cpu")
     model.to(device)
 
+    # Create checkpoints directory if it doesn't exist
+    os.makedirs("./checkpoints", exist_ok=True)
+
+    # Check if dataloader is empty
+    if len(dataloader) == 0:
+        raise ValueError("DataLoader is empty. Cannot proceed with training.")
+    
     optimizer = torch.optim.AdamW(model.parameters(), lr=lr)
     total_steps = len(dataloader) * epochs
     scheduler = get_scheduler("linear", optimizer, num_warmup_steps=0, num_training_steps=total_steps)
