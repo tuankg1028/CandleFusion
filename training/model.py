@@ -9,7 +9,7 @@ class CrossAttentionModel(nn.Module):
                  text_model_name="bert-base-uncased",
                  image_model_name="google/vit-base-patch16-224", 
                  hidden_dim=768,
-                 num_classes=2):
+                 num_classes=3):
         super().__init__()
 
         # Encoders

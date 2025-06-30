@@ -19,11 +19,27 @@ def create_dataset_index(ohlcv_df: pd.DataFrame, image_dir: str, window: int = 3
     """
     records = []
     total = len(ohlcv_df) - window + 1
+    missing_images = 0
 
     for i in range(total):
+        # Check if we have enough future data
+        if i + window >= len(ohlcv_df):
+            break
+
         chunk = ohlcv_df.iloc[i:i+window]
         last_candle = chunk.iloc[-1].to_dict()
         next_close = ohlcv_df.iloc[i + window]["close"] if i + window < len(ohlcv_df) else ohlcv_df.iloc[i + window - 1]["close"]
+
+        # Validate image exists
+        image_path = os.path.join(image_dir, f"candle_{i:04d}.png")
+        if not os.path.exists(image_path):
+            missing_images += 1
+            continue
+
+        # Validate data quality
+        if any(pd.isna([last_candle['open'], last_candle['high'], 
+                       last_candle['low'], last_candle['close'], next_close])):
+            continue
 
         record = {
             "image_path": os.path.join(image_dir, f"candle_{i:04d}.png"),
@@ -34,6 +50,10 @@ def create_dataset_index(ohlcv_df: pd.DataFrame, image_dir: str, window: int = 3
         records.append(record)
 
     df_index = pd.DataFrame(records)
+    # Print label distribution
+    label_counts = df_index['label'].value_counts().sort_index()
+    print(f"📊 Label distribution: {dict(label_counts)}")
+    
     os.makedirs(os.path.dirname(output_csv), exist_ok=True)
     df_index.to_csv(output_csv, index=False)
     print(f"✅ Dataset index saved to {output_csv} with {len(df_index)} records.")
