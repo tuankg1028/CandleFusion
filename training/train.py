@@ -235,6 +235,8 @@ tags:
 - cross-attention
 - trading
 - forecasting
+datasets:
+- tuankg1028/btc-candlestick-dataset
 ---
 
 # CandleFusion Model
@@ -244,6 +246,7 @@ A multimodal financial analysis model that combines textual market sentiment wit
 ## Links
 - 🔗 **GitHub Repository**: https://github.com/tuankg1028/CandleFusion
 - 🚀 **Demo on Hugging Face Spaces**: https://huggingface.co/spaces/tuankg1028/candlefusion
+- 📊 **Dataset**: https://huggingface.co/datasets/tuankg1028/btc-candlestick-dataset
 
 ## Training Results
 - **Best Epoch**: {best_epoch}
@@ -258,7 +261,7 @@ A multimodal financial analysis model that combines textual market sentiment wit
 - **Vision Encoder**: Vision Transformer (ViT-base-patch16-224) for candlestick pattern recognition
 - **Cross-Attention Fusion**: Multi-head attention mechanism (8 heads, 768 dim) for text-image integration
 - **Dual Task Heads**: 
-  - Classification head for trading signals (buy/sell/hold)
+  - Classification head for trading signals (bullish/bearish)
   - Regression head for next closing price prediction
 
 ### Data Flow
@@ -273,7 +276,7 @@ A multimodal financial analysis model that combines textual market sentiment wit
 - **Input Text**: Tokenized to max 64 tokens
 - **Input Images**: Resized to 224x224 RGB
 - **Hidden Dimension**: 768 (consistent across encoders)
-- **Output Classes**: 3 (buy/sell/hold)
+- **Output Classes**: 2 (bullish/bearish)
 - **Dropout**: 0.3 in both heads
 
 ## Training Details
